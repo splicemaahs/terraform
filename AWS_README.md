@@ -1,6 +1,8 @@
 # Use Terraform to build an environment for testing SEC POC
 
-Start from the `./aws` directory.
+From the `./` directory, run `./create-winkey.sh` to create a ssh keypair.
+
+Then, start from the `./aws` directory.
 
 This creates a network of Windows Machines, you can RDP into the Jumpbox, and the
 jumpbox itself has Internet access.  The Server 1 .. Server N machines have no

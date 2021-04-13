@@ -9,7 +9,7 @@ for r in us-east-1 us-east-2 us-west-2 eu-west-1 eu-central-1; do
   export AMILIST_JQFORMAT="([\"${r}\", .ImageId, .RootDeviceType, .Name]) | @tsv"
   LINE=$(aws ec2 describe-images --region ${r} --profile ${PROFILE} \
       --owners amazon \
-      --filters "Name=platform,Values=windows" "Name=root-device-type,Values=ebs" "Name=name,Values=Windows_Server-2016-${LANGUAGE}-Full-Base*" \
+      --filters "Name=platform,Values=windows" "Name=root-device-type,Values=ebs" "Name=name,Values=Windows_Server-2019-${LANGUAGE}-Full-Base*" \
       --query 'sort_by(Images, &CreationDate)[-1]' \
       | jq -r ${AMILIST_JQFORMAT})
   OUTPUT="${OUTPUT}\n${LINE}"
