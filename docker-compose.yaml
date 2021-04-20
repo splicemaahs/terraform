@@ -1,0 +1,12 @@
+version: "3"
+
+  splice:
+    image: 'splicemachine/splicemachine-standalone:0.0.4'
+    # command: ./start-splice-cluster -b -s 1
+    command: ./start-splice-cluster
+    environment:
+      HOST_IP: "172.21.12.4"
+    ports:
+      - "1527:1527"
+      - "9092:9092"
+      - "19092:19092"

@@ -1,0 +1,102 @@
+# Docker Desktop Installation Command List
+# ----------------------------------------
+Invoke-WebRequest -Uri https://desktop.docker.com/win/stable/Docker%20Desktop%20Installer.exe -OutFile Docker_Installer.exe
+./Docker_Installer.exe
+
+Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile wsl_update_x64.msi
+./wsl_update_x64.msi
+
+docker run --rm debian uname -a
+
+# Docker Compose Script
+# ---------------------
+
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/Build-DockerCompose.ps1 -OutFile Build-DockerCompose.ps1
+Build-DockerCompose.ps1
+
+# Docker Images
+# -------------
+
+docker login splicesec.azurecr.io
+# Username: splicesec
+# Password: 
+docker pull splicesec.azurecr.io/splicesec/splicemachine-standalone:0.0.6
+docker pull splicesec.azurecr.io/splicesec/ssds-standalone:0.0.2
+docker pull splicesec.azurecr.io/splicesec/splice-https:0.0.7
+docker pull splicesec.azurecr.io/splicesec/sqlshell:latest
+
+docker tag splicesec.azurecr.io/splicesec/splicemachine-standalone:0.0.6 splicemachine/splicemachine-standalone:0.0.6
+docker tag splicesec.azurecr.io/splicesec/ssds-standalone:0.0.2 splicemachine/ssds-standalone:0.0.2
+docker tag splicesec.azurecr.io/splicesec/splice-https:0.0.7 splicemachine/splice-https:0.0.7
+docker tag splicesec.azurecr.io/splicesec/sqlshell:latest splicemachine/sqlshell:latest
+
+
+# Starting Services on Machine 1
+# ------------------------------
+
+cd $env:USERPROFILE\splicedb
+docker-compose.exe up -d
+
+$defaultNetInterface = (Get-NetRoute |Where-Object {$_.DestinationPrefix -eq "0.0.0.0/0" } |Select-Object -Property ifIndex).ifIndex
+$ipAddress = (Get-NetIPAddress -AddressFamily IPV4 | Where-Object {$_.InterfaceIndex -eq $defaultNetInterface}).IPAddress
+docker run --rm -it splicemachine/sqlshell -U "jdbc:splice://$($ipAddress):1527/splicedb;user=splice;password=admin"
+
+DROP TABLE IF EXISTS "SPLICE"."CH1DEVICE1";
+CREATE TABLE "SPLICE"."CH1DEVICE1" (
+"ITEM" VARCHAR(100) NOT NULL
+,"SERVERTIME" TIMESTAMP
+,"SOURCETIME" TIMESTAMP NOT NULL
+,"VALUE" DOUBLE
+,"STATUS" BIGINT
+,"NAMESPACE" VARCHAR(50)
+,"CHANNEL" VARCHAR(50)
+,"TAG" VARCHAR(100)
+,"UNIT" VARCHAR(100)
+,"STAG" VARCHAR(100)
+, PRIMARY KEY("ITEM","SOURCETIME")) ;
+
+cd $env:USERPROFILE\splicehttp
+docker-compose.exe up -d
+
+cd $env:USERPROFILE\splicessds
+docker-compose.exe up -d
+
+# NIFI Native Windows Install (Machine 2)
+# ---------------------------------------
+
+cd $env:USERPROFILE
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/Download-NiFi-Resources.ps1 -OutFile Download-NiFi-Resources.ps1
+.\Download-NiFi-Resources.ps1
+Expand-Archive -LiteralPath nifi-1.13.2-bin.zip -DestinationPath './nifi/'
+./jre-8u281-windows-x64.exe
+[Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Java\jre1.8.0_281", "Machine")
+$env:JAVA_HOME="C:\Program Files\Java\jre1.8.0_281"
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/nifi-opcua.nar -OutFile .\nifi\nifi-1.13.2\lib\nifi-opcua.nar
+cd nifi\nifi-1.13.2\bin
+.\run-nifi.bat
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/prosys-opc-ua-client-3.2.0-328.exe -OutFile prosys-opc.exe
+./prosys-opc.exe
+
+# OPC and Grafana
+# ---------------
+
+cd $env:USERPROFILE
+Invoke-WebRequest -Uri https://dl.grafana.com/oss/release/grafana-7.5.3.windows-amd64.msi -OutFile grafana-7.5.3.windows-amd64.msi
+./grafana-7.5.3.windows-amd64.msi
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/Install-SpliceMachine-GrafanaPlugin.ps1 -OutFile Install-SpliceMachine-GrafanaPlugin.ps1
+.\Install-SpliceMachine-GrafanaPlugin.ps1
+
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/Real+Data-1618431004082.json -OutFile .\Downloads\Real+Data-1618431004082.json
+
+Invoke-WebRequest -Uri https://dominik-splice.s3.eu-central-1.amazonaws.com/on-prem/resources/kepware_install.exe -OutFile kepware_install.exe
+./kepware_install.exe
+
+# Common Tasks
+# ------------
+
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+dism /online /Enable-Feature /FeatureName:TelnetClient
+
+$defaultNetInterface = (Get-NetRoute |Where-Object {$_.DestinationPrefix -eq "0.0.0.0/0" } |Select-Object -Property ifIndex).ifIndex
+$ipAddress = (Get-NetIPAddress -AddressFamily IPV4 | Where-Object {$_.InterfaceIndex -eq $defaultNetInterface}).IPAddress
+docker run --rm -it splicemachine/sqlshell -U "jdbc:splice://$($ipAddress):1527/splicedb;user=splice;password=admin"
