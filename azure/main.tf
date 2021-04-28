@@ -7,7 +7,7 @@ terraform {
   required_providers {
     azurerm = {
       source = "hashicorp/azurerm"
-      version = "2.55.0"
+      version = "2.56.0"
     }
     time = {
       source  = "hashicorp/time"
@@ -23,10 +23,10 @@ terraform {
 provider "azurerm" {
   # Configuration options
   features {}
-  subscription_id = "ADD_ME"
-  client_id       = "ADD_ME"
+  subscription_id = var.subscription_id
+  client_id       = var.client_id
   client_secret   = var.client_secret
-  tenant_id       = "ADD_ME"
+  tenant_id       = var.tenant_id
 }
 
 module "tags" {
@@ -54,21 +54,25 @@ module "windows" {
   nsg_id = module.base.nsg_id
   nsg_internal_id = module.base.nsg_internal_id
   common_tags = module.tags.common_tags
+  windows_jumpboxes = var.windows_jumpboxes
   windows_machines = var.windows_machines
 #   vpc_id = module.network.vpc_id
 #   subnet_id = module.network.subnet_id
 #   common_tags = module.tags.common_tags
 }
 
-# module "linux" {
-#   source = "./modules/linux"
-#   environment = var.environment
-#   path_to_public_key = var.path_to_public_key
-#   path_to_private_key = var.path_to_private_key
-#   aws_region = var.aws_region
-#   instance_type = var.instance_type
-#   vpc_id = module.network.vpc_id
-#   subnet_id = module.network.subnet_id
-#   common_tags = module.tags.common_tags
-#   linux_machines = var.linux_machines
-# }
+module "linux" {
+  source = "./modules/linux"
+  admin_user = var.admin_user
+  path_to_public_key = var.path_to_public_key
+  path_to_private_key = var.path_to_private_key
+  resource_group = var.resource_group
+  instance_size = var.instance_size
+  subnet_id = module.base.subnet_id
+  location = var.location
+  nsg_id = module.base.nsg_id
+  nsg_internal_id = module.base.nsg_internal_id
+  common_tags = module.tags.common_tags
+  linux_jumpboxes = var.linux_jumpboxes
+  linux_machines = var.linux_machines
+}

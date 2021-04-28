@@ -1,0 +1,26 @@
+client_secret = "YOUR_CLIENT_SECRET"
+resource_group = "YOUR_RG"
+admin_user = "splice"
+admin_pass = "YOUR_PASSWORD"
+instance_size = "Standard_D4s_v3"
+creator = "YOUR_NAME_HERE"
+location = "East US"
+windows_jumpboxes=[
+    "w-jumpbox1"
+]
+windows_machines=[
+    "w-server1"
+]
+linux_jumpboxes=[
+    "l-jumpbox1"
+]
+linux_machines=[
+    "l-server1"
+    ,"l-server2"
+    ,"l-server3"
+    ,"l-server4"
+]
+
+subscription_id = "YOUR_SUBSCRIPTION_ID"
+client_id       = "YOUR_CLIENT_ID"
+tenant_id       = "YOUR_TENANT_ID"

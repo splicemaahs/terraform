@@ -19,6 +19,23 @@ resource "azurerm_network_security_group" "nsg" {
     source_application_security_group_ids = [ ]
     source_port_range = "*"
     source_port_ranges = [ ]
+  },{
+    access = "Allow"
+    description = "SSH"
+    destination_address_prefix = "*"
+    destination_address_prefixes = [ ]
+    destination_application_security_group_ids = [ ]
+    destination_port_range = "22"
+    destination_port_ranges = [ ]
+    direction = "Inbound"
+    name = "SSH"
+    priority = 301
+    protocol = "TCP"
+    source_address_prefix = ""
+    source_address_prefixes = ["23.20.251.250/32", "172.21.12.0/22" ]
+    source_application_security_group_ids = [ ]
+    source_port_range = "*"
+    source_port_ranges = [ ]
   } ]
 }
 
@@ -37,6 +54,23 @@ resource "azurerm_network_security_group" "nsg-internal" {
     direction = "Inbound"
     name = "RDP"
     priority = 300
+    protocol = "TCP"
+    source_address_prefix = ""
+    source_address_prefixes = ["172.21.12.0/22" ]
+    source_application_security_group_ids = [ ]
+    source_port_range = "*"
+    source_port_ranges = [ ]
+  } ,{
+    access = "Allow"
+    description = "SSH"
+    destination_address_prefix = "*"
+    destination_address_prefixes = [ ]
+    destination_application_security_group_ids = [ ]
+    destination_port_range = "22"
+    destination_port_ranges = [ ]
+    direction = "Inbound"
+    name = "SSH"
+    priority = 301
     protocol = "TCP"
     source_address_prefix = ""
     source_address_prefixes = ["172.21.12.0/22" ]
@@ -84,10 +118,10 @@ resource "azurerm_virtual_network" "virtual-network" {
   address_space       = ["172.21.12.0/22"]
   # dns_servers         = ["172.21.12.4", "172.21.12.5"]
 
-  ddos_protection_plan {
-    id     = azurerm_network_ddos_protection_plan.ddos-plan.id
-    enable = true
-  }
+  # ddos_protection_plan {
+  #   id     = azurerm_network_ddos_protection_plan.ddos-plan.id
+  #   enable = true
+  # }
 
   # subnet {
   #   name           = "${var.resource_group}-subnet"
@@ -97,8 +131,8 @@ resource "azurerm_virtual_network" "virtual-network" {
 
   tags = merge(
     var.common_tags,
-    map(
-      "Name", "${var.resource_group}-vnet"
-    )
+    tomap({
+      "Name" = "${var.resource_group}-vnet"
+    })
   )
 }

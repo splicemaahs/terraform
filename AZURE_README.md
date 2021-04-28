@@ -2,32 +2,33 @@
 
 Start from the `./azure` directory.
 
-This creates a network of Windows Machines, you can RDP into the Jumpbox, and the
-jumpbox itself has Internet access.  The Server 1 .. Server N machines have no
-internet access, making the environment similar to what we can expect inside the
-air-gapped facility.  We can download files onto the jumpbox, transfer them to
-the Server machines for installation.  If we build AMIs for the individual servers
-that contain already installed software, we can extend this to spin up each of the
-isolated servers with a specific AMI, for now they are spinning up with the
-original Windows 10 image that Brandon made.
+This creates a network of Linux and Windows Machines, you can RDP/SSH into the
+respective Jumpboxes, and the jumpboxes themselves have Internet access. By default
+the Linux/Windows 1 .. Linux/Windows N machines have no internet access, making the
+environment similar to what we can expect inside the air-gapped facility.  We can
+download files onto the jumpbox, transfer them to the Server machines for installation.
+The Redhat 7.6 images being used in the "Private" portion were images that were created
+by Brandon, to handle expanded disk sizes.
 
 ```plaintext
-                                            No Internet
-+--------+         +---------+            +------------+
-|        |         |         |            |            |
-|  You   |<-pubIp->| Jumpbox |<--privIp-->|  Server 1  |
-|        |         |         |            |            |
-+--------+         +---------+            +------------+
-                                                ˄
-                                                |
-                                                | Private network
-                                                |
-                                                ˅
-                                          +------------+
-                                          |            |
-                                          |  Server N  |
-                                          |            |
-                                          +------------+
+                                              No Internet - Private network
+                                          +-------------------------------------+
++--------+         +---------+            |  +-----------+     +-------------+  |
+|        |         |         |            |  |           |     |             |  |
+|  You   |<-pubIp->| Jumpbox |<--privIp-->|  |  Linux 1  |     |  Windows 1  |  |
+|        |         |  Linux  |            |  |           |     |             |  |
++--------+         +---------+            |  +-----------+     +-------------+  |
+    ˄                                     |        ˄                   ˄        |
+    |              +---------+            |        |                   |        |
+    |              |         |            |        +-------------------+        |
+    +----pubIP---->| Jumpbox |<--privIP-->|        |                   |        |
+                   | Windows |            |        ˅                   ˅        |
+                   +---------+            |  +-----------+     +-------------+  |
+                                          |  |           |     |             |  |
+                                          |  |  Linux N  |     |  Windows N  |  |
+                                          |  |           |     |             |  |
+                                          |  +-----------+     +-------------+  |
+                                          +-------------------------------------+
 ```
 
 ## Provisioning the Environment with Terraform
@@ -44,10 +45,24 @@ admin_pass = "P4$$w0rdNoP33k"
 instance_size = "Standard_D4s_v3"
 creator = "Splice Machine"
 location = "East US"
-windows_machines=[
-    "server1"
-    #,"server2"
+windows_jumpboxes=[
+    "w-jumpbox1"
 ]
+windows_machines=[
+    "w-server1"
+]
+linux_jumpboxes=[
+    "l-jumpbox1"
+]
+linux_machines=[
+    "l-server1"
+    ,"l-server2"
+    ,"l-server3"
+    ,"l-server4"
+]
+subscription_id = ""
+client_id       = ""
+tenant_id       = ""
 ```
 
 ### Run Terraform
@@ -74,7 +89,7 @@ as well as a command to get status of the VM instances.
 az vm get-instance-view --name <instance_name> --resource-group <resource-group> --output table
 ```
 
-#### RDP to the Jumpbox instance
+#### RDP to the Windows Jumpbox instance
 
 Use "Microsoft Remote Desktop" from the App Store, or other RDP client to connect
 to the instance using the public IP, Username and Password were set in the
@@ -82,6 +97,13 @@ to the instance using the public IP, Username and Password were set in the
 
 From the Jumpbox, you can run `mstsc` and then RDP using the Private IP address of the
 other internal windows machine.
+
+#### SSH to the Linux Jumpbox instance
+
+```bash
+# using the -A will allow you to then use ssh splice@<privateIP> to ssh to the internal machines
+ssh -A -i winkey splice@<publicip>
+```
 
 #### Allow "internal" VMs access to the Internet
 
@@ -112,6 +134,7 @@ terraform destroy
 
 ### TODO
 
+- [ ] THIS ENTIRE SECTION NEEDS TO BE UPDATED - since migration to Redhat / Windows mix
 - [x] Need to get init command for ssds container and update the docker-compose.yaml for that
 - [x] Need to push splicemachine/splicemachine-standalone:0.0.6 (after test) to splicesec.azurecr.io.
 - [x] Need to push jpanko/ssds-standalone:0.0.2 (after test) to splicesec.azurecr.io/splicesec/ssds-standalone:0.0.2
