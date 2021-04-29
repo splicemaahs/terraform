@@ -26,6 +26,9 @@ variable "admin_pass" {
 variable "instance_size" {
 }
 
+variable "jumpbox_instance_size" {
+}
+
 variable "account" {
   default = "nonprod"
 }

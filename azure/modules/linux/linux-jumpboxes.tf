@@ -46,7 +46,7 @@ resource "azurerm_linux_virtual_machine" "linux-vm" {
   computer_name = each.value
   resource_group_name = var.resource_group
   location            = var.location
-  size                = var.instance_size
+  size                = var.jumpbox_instance_size
   admin_username      = var.admin_user
   network_interface_ids = [
     azurerm_network_interface.nic[each.value].id,
@@ -58,18 +58,26 @@ resource "azurerm_linux_virtual_machine" "linux-vm" {
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
+    disk_size_gb = 100
   }
 
   # source_image_id = "/subscriptions/8777b2db-3764-422b-a302-7aefb352399f/resourceGroups/sec-linux/providers/Microsoft.Compute/images/rhel76-vm-template"
 
+  # source_image_reference {
+  #   publisher = "RedHat"
+  #   offer     = "RHEL"
+  #   sku       = "7lvm-gen2"
+  #   version   = "7.6.2020082423"
+  # }
+
   source_image_reference {
-    publisher = "RedHat"
-    offer     = "RHEL"
-    sku       = "7lvm-gen2"
-    version   = "7.6.2020082423"
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "7_9-gen2"
+    version   = "7.9.2021020401"
   }
 
-    tags = merge(
+  tags = merge(
     var.common_tags,
     tomap({
       "Name" = "${var.resource_group}-${each.value}-rhel76"

@@ -6,6 +6,10 @@ variable "admin_pass" {
     default = "Passw0rd4U!!!"
 }
 
+variable "jumpbox_instance_size" {
+    default = "Standard_D4s_v4"
+}
+
 variable "instance_size" {
     default = "Standard_D4s_v4"
 }

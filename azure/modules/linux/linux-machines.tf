@@ -44,9 +44,10 @@ resource "azurerm_linux_virtual_machine" "linux-system" {
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
+    disk_size_gb = 100
   }
 
-  source_image_id = "/subscriptions/8777b2db-3764-422b-a302-7aefb352399f/resourceGroups/sec-linux/providers/Microsoft.Compute/images/rhel76-vm-template"
+  # source_image_id = "/subscriptions/8777b2db-3764-422b-a302-7aefb352399f/resourceGroups/sec-linux/providers/Microsoft.Compute/images/rhel76-vm-template"
 
   # source_image_reference {
   #   publisher = "RedHat"
@@ -54,8 +55,14 @@ resource "azurerm_linux_virtual_machine" "linux-system" {
   #   sku       = "7lvm-gen2"
   #   version   = "7.6.2020082423"
   # }
+  source_image_reference {
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "7_9-gen2"
+    version   = "7.9.2021020401"
+  }
 
-    tags = merge(
+  tags = merge(
     var.common_tags,
     tomap({
       "Name" = "${var.resource_group}-${each.value}-rhel76"
@@ -64,20 +71,20 @@ resource "azurerm_linux_virtual_machine" "linux-system" {
 }
 
 # TODO: why doesn't the [each-value] ref work in the attachment section?
-# resource "azurerm_managed_disk" "linux-system" {
-#   for_each = toset(var.linux_machines)
-#   name                 = "${var.resource_group}-${each.value}-disk1"
-#   location             = var.location
-#   resource_group_name  = var.resource_group
-#   storage_account_type = "Premium_LRS"
-#   create_option        = "Empty"
-#   disk_size_gb         = 256
-# }
+resource "azurerm_managed_disk" "linux-system" {
+  for_each = toset(var.linux_machines)
+  name                 = "${var.resource_group}-${each.value}-disk1"
+  location             = var.location
+  resource_group_name  = var.resource_group
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 512
+}
 
-# resource "azurerm_virtual_machine_data_disk_attachment" "linux-system" {
-#   for_each = toset(var.linux_machines)
-#   managed_disk_id    = azurerm_managed_disk.linux-system[each.value].id
-#   virtual_machine_id = azurerm_linux_virtual_machine.linux-system[index(keys(var.linux_machines), each.key)].id
-#   lun                = "10"
-#   caching            = "ReadWrite"
-# }
+resource "azurerm_virtual_machine_data_disk_attachment" "linux-system" {
+  for_each = toset(var.linux_machines)
+  managed_disk_id    = azurerm_managed_disk.linux-system[each.value].id
+  virtual_machine_id = azurerm_linux_virtual_machine.linux-system[each.key].id
+  lun                = "10"
+  caching            = "ReadWrite"
+}

@@ -4,6 +4,10 @@ variable "admin_user" {
 variable "path_to_private_key" { }
 variable "path_to_public_key" { }
 
+variable "jumpbox_instance_size" {
+    default = "Standard_D4s_v4"
+}
+
 variable "instance_size" {
     default = "Standard_D4s_v4"
 }

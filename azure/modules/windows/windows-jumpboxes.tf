@@ -46,7 +46,7 @@ resource "azurerm_windows_virtual_machine" "win-vm" {
   computer_name = each.value
   resource_group_name = var.resource_group
   location            = var.location
-  size                = var.instance_size
+  size                = var.jumpbox_instance_size
   admin_username      = var.admin_user
   admin_password      = var.admin_pass
   network_interface_ids = [
