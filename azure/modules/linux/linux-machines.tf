@@ -25,15 +25,21 @@ resource "azurerm_network_interface_security_group_association" "private-nic-nsg
   network_security_group_id = var.nsg_internal_id
 }
 
+# Data template Bash bootstrapping file
+# data "template_file" "linux-vm-cloud-init" {
+#   template = file("azure-user-data.sh")
+# }
 
 resource "azurerm_linux_virtual_machine" "linux-system" {
   for_each = toset(var.linux_machines)
-  name                = "${var.resource_group}-${each.value}-rhel76"
+  name                = "${var.resource_group}-${each.value}"
   computer_name = each.value
   resource_group_name = var.resource_group
   location            = var.location
   size                = var.instance_size
   admin_username      = var.admin_user
+  encryption_at_host_enabled = false
+  # custom_data = base64encode(data.template_file.linux-vm-cloud-init.rendered)
   network_interface_ids = [
     azurerm_network_interface.private-nic[each.value].id,
   ]
@@ -55,17 +61,29 @@ resource "azurerm_linux_virtual_machine" "linux-system" {
   #   sku       = "7lvm-gen2"
   #   version   = "7.6.2020082423"
   # }
+  # source_image_reference {
+  #   publisher = "OpenLogic"
+  #   offer     = "CentOS"
+  #   sku       = "7_9-gen2"
+  #   version   = "7.9.2021020401"
+  # }
+  # source_image_reference {
+  #   publisher = "Debian"
+  #   offer     = "debian-10"
+  #   sku       = "10"
+  #   version   = "0.20210329.591"
+  # }
   source_image_reference {
-    publisher = "OpenLogic"
-    offer     = "CentOS"
-    sku       = "7_9-gen2"
-    version   = "7.9.2021020401"
+    publisher = var.linux_publisher
+    offer     = var.linux_offer
+    sku       = var.linux_sku
+    version   = var.linux_version
   }
 
   tags = merge(
     var.common_tags,
     tomap({
-      "Name" = "${var.resource_group}-${each.value}-rhel76"
+      "Name" = "${var.resource_group}-${each.value}"
     })
   )
 }

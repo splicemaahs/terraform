@@ -4,3 +4,4 @@ winkey
 winkey.pub
 .DS_Store
 crash*.log
+**/environments/*

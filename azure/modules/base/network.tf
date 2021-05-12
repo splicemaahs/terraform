@@ -15,7 +15,7 @@ resource "azurerm_network_security_group" "nsg" {
     priority = 300
     protocol = "TCP"
     source_address_prefix = ""
-    source_address_prefixes = ["23.20.251.250/32", "172.21.12.0/22" ]
+    source_address_prefixes = var.networks_allow
     source_application_security_group_ids = [ ]
     source_port_range = "*"
     source_port_ranges = [ ]
@@ -32,7 +32,7 @@ resource "azurerm_network_security_group" "nsg" {
     priority = 301
     protocol = "TCP"
     source_address_prefix = ""
-    source_address_prefixes = ["23.20.251.250/32", "172.21.12.0/22" ]
+    source_address_prefixes = var.networks_allow
     source_application_security_group_ids = [ ]
     source_port_range = "*"
     source_port_ranges = [ ]
@@ -77,32 +77,28 @@ resource "azurerm_network_security_group" "nsg-internal" {
     source_application_security_group_ids = [ ]
     source_port_range = "*"
     source_port_ranges = [ ]
-  }, {
-    access = "Deny"
-    description = "Deny outbound traffic from all VMs to Internet"
-    destination_address_prefix = "Internet"
-    destination_address_prefixes = [ ]
-    destination_application_security_group_ids = [ ]
-    destination_port_range = "*"
-    destination_port_ranges = [ ]
-    direction = "Outbound"
-    name = "DenyInternetOutBound"
-    priority = 500
-    protocol = "*"
-    source_address_prefix = "*"
-    source_address_prefixes = [ ]
-    source_application_security_group_ids = [ ]
-    source_port_range = "*"
-    source_port_ranges = [ ]
   }
    ]
 }
 
-resource "azurerm_network_ddos_protection_plan" "ddos-plan" {
-  name                = "${var.resource_group}-ddosplan"
-  location            = azurerm_resource_group.resource-group.location
-  resource_group_name = azurerm_resource_group.resource-group.name
+resource "azurerm_network_security_rule" "nsg-denyoutbound" {
+  count                       = var.deny_outbound
+  name                        = "DenyInternetOutBound"
+  description                 = "Deny outbound traffic from all VMs to Internet"
+  priority                    = 500
+  direction                   = "Outbound"
+  access                      = "Deny"
+  protocol                    = "*"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "Internet"
+  destination_application_security_group_ids = [ ]
+  source_application_security_group_ids = [ ]
+  resource_group_name         = azurerm_resource_group.resource-group.name
+  network_security_group_name = azurerm_network_security_group.nsg-internal.name
 }
+
 
 resource "azurerm_subnet" "subnet" {
   name                 = "${var.resource_group}-subnet"

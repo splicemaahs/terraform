@@ -30,3 +30,16 @@ variable "linux_machines" {
     "l-server1"
   ]
 }
+
+variable "linux_offer" {
+  default = "RHEL"
+}
+variable "linux_sku" {
+  default = "83-gen2"
+}
+variable "linux_publisher" {
+  default = "RedHat"
+}
+variable "linux_version" {
+  default = "8.3.2020111907"
+}

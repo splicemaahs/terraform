@@ -17,3 +17,8 @@ output "linux_servers" {
   value = [for lb in module.linux.linux_servers : tomap({"private_ip" = lb.private_ip_address, "vm_name" = lb.name, "status_check" = "az vm get-instance-view --name ${lb.name} --resource-group ${var.resource_group} --output table"})]
   sensitive = false
 }
+
+output "server_list" {
+  value = [for lb in module.linux.linux_servers : "${lb.computer_name} ansible_host=${lb.private_ip_address} ansible_user=splice ansible_sudo=true ansible_sudo_user=root"]
+  sensitive = false
+}

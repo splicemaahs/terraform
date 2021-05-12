@@ -42,7 +42,7 @@ resource "azurerm_network_interface_security_group_association" "nic-nsg" {
 
 resource "azurerm_linux_virtual_machine" "linux-vm" {
   for_each = toset(var.linux_jumpboxes)
-  name                = "${var.resource_group}-${each.value}-rhel76"
+  name                = "${var.resource_group}-${each.value}"
   computer_name = each.value
   resource_group_name = var.resource_group
   location            = var.location
@@ -69,37 +69,47 @@ resource "azurerm_linux_virtual_machine" "linux-vm" {
   #   sku       = "7lvm-gen2"
   #   version   = "7.6.2020082423"
   # }
-
+  # source_image_reference {
+  #   publisher = "OpenLogic"
+  #   offer     = "CentOS"
+  #   sku       = "7_9-gen2"
+  #   version   = "7.9.2021020401"
+  # }
+  # source_image_reference {
+  #   publisher = "Debian"
+  #   offer     = "debian-10"
+  #   sku       = "10"
+  #   version   = "0.20210329.591"
+  # }
   source_image_reference {
-    publisher = "OpenLogic"
-    offer     = "CentOS"
-    sku       = "7_9-gen2"
-    version   = "7.9.2021020401"
+    publisher = var.linux_publisher
+    offer     = var.linux_offer
+    sku       = var.linux_sku
+    version   = var.linux_version
   }
 
   tags = merge(
     var.common_tags,
     tomap({
-      "Name" = "${var.resource_group}-${each.value}-rhel76"
+      "Name" = "${var.resource_group}-${each.value}"
     })
   )
 }
 
-# # TODO: why doesn't the [each-value] ref work in the attachment section?
-# resource "azurerm_managed_disk" "linux-vm" {
-#   for_each = toset(var.linux_jumpboxes)
-#   name                 = "${var.resource_group}-${each.value}-disk1"
-#   location             = var.location
-#   resource_group_name  = var.resource_group
-#   storage_account_type = "Premium_LRS"
-#   create_option        = "Empty"
-#   disk_size_gb         = 256
-# }
+resource "azurerm_managed_disk" "linux-vm" {
+  for_each = toset(var.linux_jumpboxes)
+  name                 = "${var.resource_group}-${each.value}-disk1"
+  location             = var.location
+  resource_group_name  = var.resource_group
+  storage_account_type = "Premium_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = 512
+}
 
-# resource "azurerm_virtual_machine_data_disk_attachment" "linux-vm" {
-#   for_each = toset(var.linux_jumpboxes)
-#   managed_disk_id    = azurerm_managed_disk.linux-vm[each.value].id
-#   virtual_machine_id = azurerm_linux_virtual_machine.linux-vm[index(keys(var.linux_jumpboxes), each.key)].id
-#   lun                = "10"
-#   caching            = "ReadWrite"
-# }
+resource "azurerm_virtual_machine_data_disk_attachment" "linux-vm" {
+  for_each = toset(var.linux_jumpboxes)
+  managed_disk_id    = azurerm_managed_disk.linux-vm[each.value].id
+  virtual_machine_id = azurerm_linux_virtual_machine.linux-vm[each.key].id
+  lun                = "10"
+  caching            = "ReadWrite"
+}

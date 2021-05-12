@@ -41,6 +41,8 @@ module "base" {
   resource_group = var.resource_group
   location = var.location
   common_tags = module.tags.common_tags
+  networks_allow = var.networks_allow
+  deny_outbound = var.deny_outbound
 }
 
 module "windows" {
@@ -56,6 +58,9 @@ module "windows" {
   common_tags = module.tags.common_tags
   windows_jumpboxes = var.windows_jumpboxes
   windows_machines = var.windows_machines
+  depends_on = [
+    module.base
+  ]
 #   vpc_id = module.network.vpc_id
 #   subnet_id = module.network.subnet_id
 #   common_tags = module.tags.common_tags
@@ -68,6 +73,7 @@ module "linux" {
   path_to_private_key = var.path_to_private_key
   resource_group = var.resource_group
   instance_size = var.instance_size
+  jumpbox_instance_size = var.jumpbox_instance_size
   subnet_id = module.base.subnet_id
   location = var.location
   nsg_id = module.base.nsg_id
@@ -75,4 +81,11 @@ module "linux" {
   common_tags = module.tags.common_tags
   linux_jumpboxes = var.linux_jumpboxes
   linux_machines = var.linux_machines
+  linux_offer = var.linux_offer
+  linux_sku = var.linux_sku
+  linux_publisher = var.linux_publisher
+  linux_version = var.linux_version
+  depends_on = [
+    module.base
+  ]
 }

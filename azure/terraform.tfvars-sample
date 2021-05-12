@@ -21,6 +21,14 @@ linux_machines=[
     ,"l-server4"
 ]
 
+networks_allow=[
+     "23.20.251.250/32"
+    ,"172.21.12.0/22"
+]
+
+# Set to 0 to enable outbound internet from the internal servers
+deny_outbound = 1
+
 subscription_id = "YOUR_SUBSCRIPTION_ID"
 client_id       = "YOUR_CLIENT_ID"
 tenant_id       = "YOUR_TENANT_ID"

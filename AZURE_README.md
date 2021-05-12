@@ -105,6 +105,22 @@ other internal windows machine.
 ssh -A -i winkey splice@<publicip>
 ```
 
+##### Prep /dev/sdX
+
+```bash
+sudo fdisk -l
+# check to see which of the devices is the correct DATA volume
+# likely /dev/sdc or /dev/sda
+# use "df -h" to determine if there are mounts against the /dev/sdX device
+sudo parted /dev/sda mklabel gpt
+sudo parted -a opt /dev/sda mkpart primary ext4 0% 100%
+sudo mkfs.ext4 -L data /dev/sda1
+sudo mkdir /data
+echo "LABEL=data /data ext4 defaults 0 2" | sudo tee -a /etc/fstab
+sudo mount -a
+df -h
+```
+
 #### Allow "internal" VMs access to the Internet
 
 Simply go to the Azure Portal, navigate to the `Resource Group` and the
